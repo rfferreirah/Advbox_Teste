@@ -96,46 +96,50 @@
         <div id="mensagem"></div>
     </div>
 
-    <script>
+<script>
         // 2. Configure suas credenciais
-        const SUPABASE_URL = 'https://qwkujueloealilasfshe.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3a3VqdWVsb2VhbGlsYXNmc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1ODg5MzEsImV4cCI6MjA3NDE2NDkzMX0.Avxwblez260f8vjz490F4F1t5_rHlJsDP0zGQn3h9k0'; 
+        const SUPABASE_URL = 'https://qwkujueloealilasfshe.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3a3VqdWVsb2VhbGlsYXNmc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1ODg5MzEsImV4cCI6MjA3NDE2NDkzMX0.Avxwblez260f8vjz490F4F1t5_rHlJsDP0zGQn3h9k0'; 
 
-        // 3. Inicializa o cliente Supabase
-        // Certifique-se de que a função createClient está disponível no escopo (o script do Supabase a injeta)
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
+        // 3. Inicializa o cliente Supabase (CORREÇÃO DE SINTAXE APLICADA)
+        // A função 'createClient' é exposta globalmente pelo CDN.
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
 
         document.getElementById('onboardingForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
             const nome = document.getElementById('nome').value;
             const email = document.getElementById('email').value;
-            const contexto_onboarding = document.getElementById('contexto').value;
-            
+            const contexto_valor = document.getElementById('contexto').value; // Usando novo nome de variável
+
             // 4. Envia os dados para a tabela do Supabase
-            const { error } = await supabase
-                .from('clientes') // Nome da sua tabela
+            // ATENÇÃO: Corrigido o nome da coluna para 'contexto_tipo_onboarding'
+            const { error } = await supabaseClient
+                .from('clientes') // Tabela
                 .insert([
-                    { 
-                        nome: nome, 
-                        email: email, 
-                        contexto_onboarding: contexto_onboarding,
-                        status: 'Pendente' // Status inicial para o n8n
+                    { 
+                        nome: nome, 
+                        email: email, 
+                        contexto_tipo_onboarding: contexto_valor, // CORREÇÃO APLICADA AQUI!
+                        status: 'E-mail Enviado' // Status inicial (conforme solicitado!)
                     }
                 ]);
 
             // 5. Feedback para o usuário
             if (error) {
                 console.error('Erro ao inserir dados:', error);
-                document.getElementById('mensagem').textContent = '❌ Erro no cadastro.';
-                document.getElementById('mensagem').style.color = '#dc3545'; // Vermelho para erro
+                // RLS error é o mais comum aqui
+                document.getElementById('mensagem').textContent = '❌ Erro no cadastro. Verifique a configuração RLS.';
+                document.getElementById('mensagem').style.color = '#dc3545';
             } else {
-                document.getElementById('mensagem').textContent = '✅ Cadastro realizado! Onboarding iniciado.';
-                document.getElementById('mensagem').style.color = '#28a745'; // Verde para sucesso
+                // Mensagem atualizada para informar que o e-mail foi "enviado"
+                document.getElementById('mensagem').textContent = '✅ Cadastro realizado! E-mail de Onboarding Enviado!';
+                document.getElementById('mensagem').style.color = '#28a745'; 
                 document.getElementById('onboardingForm').reset();
             }
         });
     </script>
 </body>
 </html>
+
 
