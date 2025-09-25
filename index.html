@@ -9,52 +9,53 @@
         /* Estilos Básicos */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6; /* Cor de fundo suave */
+            background-color: #f4f7f6;
             display: flex;
-            justify-content: center; /* Centraliza horizontalmente */
-            align-items: flex-start; /* Alinha ao topo, você pode usar 'center' para centralizar verticalmente também */
-            min-height: 100vh; /* Altura mínima da tela inteira */
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
             margin: 0;
-            padding-top: 50px; /* Espaço do topo */
+            padding-top: 50px;
         }
 
         .container {
             background-color: #ffffff;
             padding: 30px;
-            border-radius: 8px; /* Cantos arredondados */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 400px; /* Largura máxima para formulários */
+            max-width: 400px;
         }
 
         /* Estilos do Formulário e Campos */
         #onboardingForm {
             display: flex;
-            flex-direction: column; /* Coloca os elementos um abaixo do outro */
-            gap: 15px; /* Espaçamento entre os campos */
+            flex-direction: column;
+            gap: 15px;
         }
 
         input[type="text"],
         input[type="email"],
+        input[type="password"], /* Adicionado o input[type="password"] */
         select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            box-sizing: border-box; /* Garante que padding não aumente a largura */
+            box-sizing: border-box;
             font-size: 16px;
         }
         
         /* Estilo para campos em foco */
         input:focus, select:focus {
-            border-color: #007bff; /* Borda azul ao focar */
-            outline: none; /* Remove o outline padrão */
+            border-color: #007bff;
+            outline: none;
             box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
         }
 
         /* Estilos do Botão */
         button[type="submit"] {
-            background-color: #007bff; /* Cor primária azul */
+            background-color: #007bff;
             color: white;
             padding: 12px 20px;
             border: none;
@@ -62,11 +63,11 @@
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
-            transition: background-color 0.3s ease; /* Transição suave para hover */
+            transition: background-color 0.3s ease;
         }
 
         button[type="submit"]:hover {
-            background-color: #0056b3; /* Azul mais escuro no hover */
+            background-color: #0056b3;
         }
 
         /* Estilos da Mensagem de Feedback */
@@ -76,7 +77,7 @@
             text-align: center;
             font-weight: bold;
             color: #333;
-            min-height: 20px; /* Para manter o espaço */
+            min-height: 20px;
         }
     </style>
 </head>
@@ -86,8 +87,11 @@
         <form id="onboardingForm">
             <input type="text" id="nome" placeholder="Seu Nome Completo" required>
             <input type="email" id="email" placeholder="Seu Email" required>
+            <input type="password" id="senha" placeholder="Crie uma Senha" required>
+            
             <select id="contexto" required>
-                <option value="" disabled selected>Selecione um Assunto</option> <option value="X">Assunto X</option>
+                <option value="" disabled selected>Selecione um Assunto</option> 
+                <option value="X">Assunto X</option>
                 <option value="Y">Assunto Y</option>
                 <option value="Z">Assunto Z</option>
             </select>
@@ -98,7 +102,6 @@
 
     <script>
     // 2. Configure suas credenciais
-    // ATENÇÃO: Substitua os placeholders pelo seu URL e ANON KEY reais.
     const SUPABASE_URL = 'https://qwkujueloealilasfshe.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3a3VqdWVsb2VhbGlsYXNmc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1ODg5MzEsImV4cCI6MjA3NDE2NDkzMX0.Avxwblez260f8vjz490F4F1t5_rHlJsDP0zGQn3h9k0'; 
 
@@ -110,24 +113,17 @@
 
         const nome = document.getElementById('nome').value;
         const email = document.getElementById('email').value;
+        const senha = document.getElementById('senha').value; // <-- NOVO: Coleta a senha
         const contexto_valor = document.getElementById('contexto').value; 
         
-        // NOTA IMPORTANTE:
-        // A lógica de Trigger no banco de dados usará apenas o email para criar o registro inicial.
-        // O 'nome' e 'contexto' PRECISAM ser passados como user_metadata se forem necessários imediatamente no Trigger,
-        // ou inseridos em uma etapa posterior pelo usuário logado.
-        
-        // **Para simplificar e fazer o cadastro funcionar imediatamente:**
-        // Vamos passar o 'nome' e 'contexto' no metadata do signUp.
-        
+        // 1. Tenta criar o usuário (Autenticação)
         const { error: authError } = await supabaseClient.auth.signUp({
             email: email,
-            // A senha é opcional, mas recomendada. Sem senha, o Supabase envia um "magic link"
-            // ou e-mail de confirmação (se configurado).
+            password: senha, // <-- MODIFICADO: Passa a senha para o signUp
             options: {
                 data: {
-                    full_name: nome, // O nome pode ser acessado no Trigger via NEW.raw_user_meta_data->>'full_name'
-                    onboarding_context: contexto_valor // O contexto também pode ser acessado
+                    full_name: nome,
+                    onboarding_context: contexto_valor
                 }
             }
         });
@@ -146,18 +142,13 @@
         }
 
         // Se chegou aqui, o usuário foi criado na tabela auth.users.
-        // O TRIGGER DO BANCO DE DADOS (SQL) agora fará o INSERT na tabela 'clientes' 
-        // e 'envios_onboarding' automaticamente.
+        // O TRIGGER DO BANCO DE DADOS (SQL) fará o INSERT na tabela 'clientes' e 'envios_onboarding' automaticamente.
         
-        document.getElementById('mensagem').textContent = '✅ Cadastro realizado! Por favor, confirme seu e-mail para iniciar o Onboarding!';
-        document.getElementById('mensagem').style.color = '#28a745'; 
+        document.getElementById('mensagem').textContent = '✅ Cadastro realizado! Por favor, verifique seu e-mail para confirmar a conta!';
+        document.getElementById('mensagem').style.color = '#28a745'; 
         document.getElementById('onboardingForm').reset();
     });
-</script>
+    </script>
 
 </body>
 </html>
-
-
-
-
