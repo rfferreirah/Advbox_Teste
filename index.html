@@ -96,75 +96,68 @@
         <div id="mensagem"></div>
     </div>
 
-<script>
-        // 2. Configure suas credenciais
-        const SUPABASE_URL = 'https://qwkujueloealilasfshe.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3a3VqdWVsb2VhbGlsYXNmc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1ODg5MzEsImV4cCI6MjA3NDE2NDkzMX0.Avxwblez260f8vjz490F4F1t5_rHlJsDP0zGQn3h9k0'; 
+    <script>
+    // 2. Configure suas credenciais
+    // ATENÇÃO: Substitua os placeholders pelo seu URL e ANON KEY reais.
+    const SUPABASE_URL = 'https://qwkujueloealilasfshe.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3a3VqdWVsb2VhbGlsYXNmc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1ODg5MzEsImV4cCI6MjA3NDE2NDkzMX0.Avxwblez260f8vjz490F4F1t5_rHlJsDP0zGQn3h9k0'; 
 
-        // 3. Inicializa o cliente Supabase (CORREÇÃO DE SINTAXE APLICADA)
-        // A função 'createClient' é exposta globalmente pelo CDN.
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
+    // 3. Inicializa o cliente Supabase
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
 
-        document.getElementById('onboardingForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
+    document.getElementById('onboardingForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
 
-            const nome = document.getElementById('nome').value;
-            const email = document.getElementById('email').value;
-            const contexto_valor = document.getElementById('contexto').value; // Usando novo nome de variável
-
-           // ATENÇÃO: É ALTAMENTE RECOMENDADO QUE SUA TABELA 'clientes' TENHA UMA COLUNA 'user_id'
-// que NÃO seja NOT NULL para esta etapa, A MENOS que você saiba que não está ligando o perfil ao Auth.
-
-// 1. TENTATIVA DE CADASTRO (Cria o usuário no Auth)
-const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-    email: email,
-    // Nota: Por motivos de segurança, a maioria das implementações exige uma senha.
-    // Como seu formulário não pede, vou focar apenas no email para o fluxo de "magic link" ou email de confirmação.
-});
-
-if (authError) {
-    console.error('Erro de autenticação:', authError.message);
-    document.getElementById('mensagem').textContent = `❌ Erro no cadastro de usuário: ${authError.message}`;
-    document.getElementById('mensagem').style.color = '#dc3545';
-    return; // Para a execução se o cadastro falhar
-}
-
-// 2. SE O CADASTRO FOI BEM SUCEDIDO NO AUTH, INSERE O REGISTRO DE PERFIL NA TABELA 'clientes'
-// Nota: Em muitos casos, se o usuário não é logado imediatamente, esta inserção falha por RLS.
-// Se sua tabela 'clientes' precisa do user_id, a inserção deve ocorrer APÓS a confirmação do e-mail ou via Function/Trigger.
-// Mas vamos tentar essa inserção AGORA, logo após o signUp, usando a Role 'anon'.
-const userId = authData.user?.id; 
-
-const { error: insertError } = await supabaseClient
-    .from('clientes') // Tabela
-    .insert([
-        { 
-            // Inclua user_id se sua tabela clientes tiver essa coluna e ela for NOT NULL.
-            // user_id: userId,
-            nome: nome, 
-            email: email, 
-            contexto_tipo_onboarding: contexto_valor,
-            status: 'E-mail Enviado' 
-        }
-    ]);
-
-// 3. Feedback para o usuário após a inserção
-if (insertError) {
-    console.error('Erro ao inserir dados do perfil:', insertError);
-    // Se o RLS ainda falhar aqui, o problema é que a Policy WITH CHECK (true) não está sendo respeitada
-    // porque o usuário não está autenticado.
-    document.getElementById('mensagem').textContent = '❌ Erro no perfil: Falha no RLS ou colunas (verifique o console).';
-    document.getElementById('mensagem').style.color = '#dc3545';
-} else {
-    // Mensagem de sucesso após as duas etapas (Auth e Perfil)
-    document.getElementById('mensagem').textContent = '✅ Cadastro realizado! Por favor, confirme seu e-mail para iniciar o Onboarding!';
-    document.getElementById('mensagem').style.color = '#28a745'; 
-    document.getElementById('onboardingForm').reset();
-}
+        const nome = document.getElementById('nome').value;
+        const email = document.getElementById('email').value;
+        const contexto_valor = document.getElementById('contexto').value; 
+        
+        // NOTA IMPORTANTE:
+        // A lógica de Trigger no banco de dados usará apenas o email para criar o registro inicial.
+        // O 'nome' e 'contexto' PRECISAM ser passados como user_metadata se forem necessários imediatamente no Trigger,
+        // ou inseridos em uma etapa posterior pelo usuário logado.
+        
+        // **Para simplificar e fazer o cadastro funcionar imediatamente:**
+        // Vamos passar o 'nome' e 'contexto' no metadata do signUp.
+        
+        const { error: authError } = await supabaseClient.auth.signUp({
+            email: email,
+            // A senha é opcional, mas recomendada. Sem senha, o Supabase envia um "magic link"
+            // ou e-mail de confirmação (se configurado).
+            options: {
+                data: {
+                    full_name: nome, // O nome pode ser acessado no Trigger via NEW.raw_user_meta_data->>'full_name'
+                    onboarding_context: contexto_valor // O contexto também pode ser acessado
+                }
+            }
         });
-    </script>
+
+        if (authError) {
+            console.error('Erro de autenticação:', authError.message);
+            
+            // Tratamento de e-mail já existente
+            if (authError.message.includes('already registered')) {
+                document.getElementById('mensagem').textContent = '❌ Erro: Este e-mail já está cadastrado.';
+            } else {
+                document.getElementById('mensagem').textContent = `❌ Erro no cadastro de usuário: ${authError.message}`;
+            }
+            document.getElementById('mensagem').style.color = '#dc3545';
+            return;
+        }
+
+        // Se chegou aqui, o usuário foi criado na tabela auth.users.
+        // O TRIGGER DO BANCO DE DADOS (SQL) agora fará o INSERT na tabela 'clientes' 
+        // e 'envios_onboarding' automaticamente.
+        
+        document.getElementById('mensagem').textContent = '✅ Cadastro realizado! Por favor, confirme seu e-mail para iniciar o Onboarding!';
+        document.getElementById('mensagem').style.color = '#28a745'; 
+        document.getElementById('onboardingForm').reset();
+    });
+</script>
+
 </body>
 </html>
+
 
 
 
