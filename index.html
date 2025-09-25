@@ -2,16 +2,92 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro para Onboarding</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    </head>
+    <style>
+        /* Estilos Básicos */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6; /* Cor de fundo suave */
+            display: flex;
+            justify-content: center; /* Centraliza horizontalmente */
+            align-items: flex-start; /* Alinha ao topo, você pode usar 'center' para centralizar verticalmente também */
+            min-height: 100vh; /* Altura mínima da tela inteira */
+            margin: 0;
+            padding-top: 50px; /* Espaço do topo */
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px; /* Cantos arredondados */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+            width: 100%;
+            max-width: 400px; /* Largura máxima para formulários */
+        }
+
+        /* Estilos do Formulário e Campos */
+        #onboardingForm {
+            display: flex;
+            flex-direction: column; /* Coloca os elementos um abaixo do outro */
+            gap: 15px; /* Espaçamento entre os campos */
+        }
+
+        input[type="text"],
+        input[type="email"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Garante que padding não aumente a largura */
+            font-size: 16px;
+        }
+        
+        /* Estilo para campos em foco */
+        input:focus, select:focus {
+            border-color: #007bff; /* Borda azul ao focar */
+            outline: none; /* Remove o outline padrão */
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        /* Estilos do Botão */
+        button[type="submit"] {
+            background-color: #007bff; /* Cor primária azul */
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s ease; /* Transição suave para hover */
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3; /* Azul mais escuro no hover */
+        }
+
+        /* Estilos da Mensagem de Feedback */
+        #mensagem {
+            margin-top: 20px;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            min-height: 20px; /* Para manter o espaço */
+        }
+    </style>
+</head>
 <body>
     <div class="container">
+        <h2>Inicie Seu Onboarding</h2> 
         <form id="onboardingForm">
-            <input type="text" id="nome" required>
-            <input type="email" id="email" required>
+            <input type="text" id="nome" placeholder="Seu Nome Completo" required>
+            <input type="email" id="email" placeholder="Seu Email" required>
             <select id="contexto" required>
-                <option value="X">Assunto X</option>
+                <option value="" disabled selected>Selecione um Assunto</option> <option value="X">Assunto X</option>
                 <option value="Y">Assunto Y</option>
                 <option value="Z">Assunto Z</option>
             </select>
@@ -26,7 +102,8 @@
         const SUPABASE_ANON_KEY = 'SUA_CHAVE_ANON_PUBLIC_KEY'; 
 
         // 3. Inicializa o cliente Supabase
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Certifique-se de que a função createClient está disponível no escopo (o script do Supabase a injeta)
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
 
         document.getElementById('onboardingForm').addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -50,9 +127,11 @@
             // 5. Feedback para o usuário
             if (error) {
                 console.error('Erro ao inserir dados:', error);
-                document.getElementById('mensagem').textContent = 'Erro no cadastro.';
+                document.getElementById('mensagem').textContent = '❌ Erro no cadastro.';
+                document.getElementById('mensagem').style.color = '#dc3545'; // Vermelho para erro
             } else {
-                document.getElementById('mensagem').textContent = 'Cadastro realizado! Onboarding iniciado.';
+                document.getElementById('mensagem').textContent = '✅ Cadastro realizado! Onboarding iniciado.';
+                document.getElementById('mensagem').style.color = '#28a745'; // Verde para sucesso
                 document.getElementById('onboardingForm').reset();
             }
         });
