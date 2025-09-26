@@ -6,32 +6,27 @@
     <title>Cadastro para Onboarding</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Estilos Básicos */
+        /* Estilos Básicos (Mantidos) */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f0f0; /* Fundo mais suave para o efeito Neumórfico */
-            
-            /* CENTRALIZAÇÃO COMPLETA: Usando Flexbox */
+            background-color: #f0f0f0;
             display: flex;
-            justify-content: center; /* Centraliza Horizontalmente */
-            align-items: center; /* Centraliza Verticalmente */
-            min-height: 100vh; /* Garante que ocupe toda a altura da viewport */
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             margin: 0;
         }
 
         .container {
-            background-color: #f0f0f0; /* Deve ser a mesma cor do body para o efeito */
+            background-color: #f0f0f0;
             padding: 40px;
             border-radius: 20px;
             width: 100%;
             max-width: 420px;
-            
-            /* Efeito Neumórfico - Sombra suave e clara */
             box-shadow: 8px 8px 15px #bebebe, 
                         -8px -8px 15px #ffffff;
         }
         
-        /* Título Centralizado e Estilizado */
         h2 {
             text-align: center;
             color: #333;
@@ -39,11 +34,10 @@
             font-weight: 600;
         }
 
-        /* Estilos do Formulário e Campos */
         #onboardingForm {
             display: flex;
             flex-direction: column;
-            gap: 20px; /* Aumenta o espaçamento */
+            gap: 20px;
         }
 
         input[type="text"],
@@ -52,52 +46,45 @@
         select {
             width: 100%;
             padding: 12px;
-            border: none; /* Remove a borda padrão */
+            border: none;
             border-radius: 8px;
             box-sizing: border-box;
             font-size: 16px;
             color: #333;
-            
-            /* Efeito "Embutido" (Neumórfico) */
             background-color: #f0f0f0;
             box-shadow: inset 5px 5px 10px #bebebe, 
                         inset -5px -5px 10px #ffffff;
             transition: all 0.2s ease;
         }
         
-        /* Estilo para campos em foco */
         input:focus, select:focus {
             box-shadow: inset 3px 3px 5px #bebebe, 
                         inset -3px -3px 5px #ffffff;
-            outline: 2px solid #007bff; /* Adiciona um anel de foco azul */
+            outline: 2px solid #007bff;
         }
 
-        /* Estilos do Botão */
         button[type="submit"] {
             background-color: #007bff;
             color: white;
             padding: 15px 20px;
             border: none;
-            border-radius: 12px; /* Borda mais arredondada */
+            border-radius: 12px;
             cursor: pointer;
             font-size: 18px;
             font-weight: bold;
             transition: all 0.3s ease;
-            
-            /* Efeito "Em relevo" no botão */
             box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         button[type="submit"]:hover {
             background-color: #0056b3;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Efeito de clique */
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
         }
         
         button[type="submit"]:active {
-            transform: scale(0.99); /* Pequeno efeito de pressão */
+            transform: scale(0.99);
         }
 
-        /* Estilos da Mensagem de Feedback */
         #mensagem {
             margin-top: 25px;
             padding: 10px;
@@ -129,12 +116,43 @@
     </div>
 
     <script>
+    // 1. URL do Webhook do n8n (COPIADA DA SUA IMAGEM)
+    const N8N_WEBHOOK_URL = 'https://n8n.rftecnologiaa.com.br/webhook-test/aff6389c-481e-4a18-b3c2-95577a4540d9';
+
     // 2. Configure suas credenciais
     const SUPABASE_URL = 'https://qwkujueloealilasfshe.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3a3VqdWVsb2VhbGlsYXNmc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1ODg5MzEsImV4cCI6MjA3NDE2NDkzMX0.Avxwblez260f8vjz490F4F1t5_rHlJsDP0zGQn3h9k0'; 
 
     // 3. Inicializa o cliente Supabase
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
+
+    // Função que dispara a automação no n8n
+    async function dispararAutomacaoOnboarding(data) {
+        try {
+            const response = await fetch(N8N_WEBHOOK_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                // Envia os dados que o nó 'Decide Assunto' espera
+                body: JSON.stringify({
+                    email: data.email,
+                    nome_cliente: data.nome, 
+                    contexto: data.contexto_valor, // 'X', 'Y', ou 'Z'
+                }),
+            });
+
+            if (response.ok) {
+                console.log("Sucesso: Automação do n8n disparada.");
+            } else {
+                console.error("Alerta: Falha ao disparar o n8n.", response.status);
+            }
+
+        } catch (e) {
+            console.error("Erro de rede ao chamar o n8n:", e);
+        }
+    }
+
 
     document.getElementById('onboardingForm').addEventListener('submit', async function(event) {
         event.preventDefault();
@@ -144,6 +162,9 @@
         const senha = document.getElementById('senha').value;
         const contexto_valor = document.getElementById('contexto').value; 
         
+        const mensagemDiv = document.getElementById('mensagem');
+        mensagemDiv.innerHTML = ''; // Limpa a mensagem
+
         // 1. Tenta criar o usuário (Autenticação)
         const { error: authError } = await supabaseClient.auth.signUp({
             email: email,
@@ -156,13 +177,9 @@
             }
         });
 
-        const mensagemDiv = document.getElementById('mensagem');
-        mensagemDiv.innerHTML = ''; // Limpa a mensagem
-
         if (authError) {
             console.error('Erro de autenticação:', authError.message);
             
-            // Tratamento de e-mail já existente
             if (authError.message.includes('already registered')) {
                 mensagemDiv.innerHTML = '❌ Erro: Este e-mail já está cadastrado.';
             } else {
@@ -172,10 +189,12 @@
             return;
         }
 
-        // Se chegou aqui, o usuário foi criado na tabela auth.users.
-        // O TRIGGER DO BANCO DE DADOS (SQL) fará o INSERT na tabela 'clientes' e 'envios_onboarding' automaticamente.
+        // 2. SE SUCESSO, DISPARA A AUTOMAÇÃO DO N8N
+        // Chamamos a função de disparo APÓS o sucesso do Supabase.signUp
+        await dispararAutomacaoOnboarding({ nome, email, contexto_valor });
         
-        mensagemDiv.innerHTML = '✅ Cadastro realizado! Por favor, verifique seu e-mail para confirmar a conta!';
+        // 3. Exibe mensagem de sucesso
+        mensagemDiv.innerHTML = '✅ Cadastro realizado! Por favor, verifique seu e-mail para confirmar a conta! (Automação disparada)';
         mensagemDiv.style.color = '#28a745'; 
         document.getElementById('onboardingForm').reset();
     });
